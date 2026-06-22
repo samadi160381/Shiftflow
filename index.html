@@ -379,8 +379,8 @@ tr:hover td{background:rgba(255,255,255,.02)}
           <span>Total scheduled: <strong style="color:var(--text);font-family:var(--mono)">40h paid</strong> (4 days, 1h lunch/day)</span>
         </div>
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-ghost btn-sm" onclick="openModal('newRequest')">Request Day Off</button>
-          <button class="btn btn-ghost btn-sm" onclick="openModal('newRequest')">Request Vacation</button>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('newRequest','dayoff')">Request Day Off</button>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('newRequest','vacation')">Request Vacation</button>
           <button class="btn btn-ghost btn-sm" onclick="openModal('new24h')">Request 24h Shift</button>
         </div>
       </div>
@@ -652,7 +652,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div class="modal">
     <h2>Submit a Request</h2>
     <div class="form-row"><label>Request Type</label>
-      <select id="reqTypeSelect">
+      <select id="reqTypeSelect" onchange="toggleReasonField()">
         <option value="vacation">Vacation</option>
         <option value="dayoff">Day Off</option>
         <option value="swap">Shift Swap</option>
@@ -660,7 +660,19 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
     <div class="form-row"><label>Start Date</label><input type="date" value="2026-07-04"/></div>
     <div class="form-row"><label>End Date (leave same for 1 day)</label><input type="date" value="2026-07-11"/></div>
-    <div class="form-row"><label>Reason / Notes</label><input type="text" placeholder="Brief description..."/></div>
+    <div class="form-row" id="reasonDropdownRow">
+      <label>Reason</label>
+      <select id="reasonSelect">
+        <option>Personal reason</option>
+        <option>Appointment</option>
+        <option>Vacation</option>
+        <option>Emergency/personal matter</option>
+        <option>Rest day request</option>
+        <option>Education/class/training commitment</option>
+        <option>Travel plans</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Additional Notes (optional)</label><input type="text" placeholder="Brief description..."/></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModals()">Cancel</button>
       <button class="btn btn-primary" onclick="saveAndClose('Request submitted!')">Submit Request</button>
@@ -766,10 +778,15 @@ tr:hover td{background:rgba(255,255,255,.02)}
     });
   }
 
-  function openModal(id) {
+  function openModal(id, presetType) {
     closeModals();
     const m = document.getElementById('modal-' + id);
     if (m) m.classList.add('open');
+    if (id === 'newRequest') {
+      const sel = document.getElementById('reqTypeSelect');
+      if (presetType) sel.value = presetType;
+      toggleReasonField();
+    }
   }
 
   function closeModals() {
@@ -810,6 +827,11 @@ tr:hover td{background:rgba(255,255,255,.02)}
   function toggleHoursDefault() {
     const val = document.getElementById('empTypeSelect').value;
     document.getElementById('empHoursInput').value = val === 'fulltime' ? 40 : 20;
+  }
+
+  function toggleReasonField() {
+    const val = document.getElementById('reqTypeSelect').value;
+    document.getElementById('reasonDropdownRow').style.display = val === 'dayoff' ? '' : 'none';
   }
 
   function showToast(msg) {
