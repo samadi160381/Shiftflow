@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>ShiftFlow – Employee Scheduling</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1117;--surface:#181c27;--card:#1e2333;--border:#2a3049;
+  --accent:#4f7cff;--accent2:#7c3aed;--green:#22c55e;--amber:#f59e0b;
+  --red:#ef4444;--text:#e2e8f0;--muted:#64748b;
+  --mono:'DM Mono',monospace;--sans:'Inter',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+
+/* LOGIN */
+.login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);flex-direction:column;gap:0}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:40px;width:380px;max-width:95vw}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .logo-icon{width:48px;height:48px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:14px;display:inline-grid;place-items:center;font-size:22px;margin-bottom:10px}
+.login-logo h1{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.login-logo p{font-size:13px;color:var(--muted);margin-top:4px}
+.role-tabs{display:flex;gap:6px;background:var(--surface);border-radius:8px;padding:4px;margin-bottom:20px}
+.role-tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:500;border-radius:6px;cursor:pointer;color:var(--muted);transition:.15s}
+.role-tab.active{background:var(--accent);color:#fff}
+.form-row{margin-bottom:14px}
+.form-row label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.form-row input,.form-row select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:8px;font-size:13px;font-family:var(--sans);outline:none;transition:border-color .15s}
+.form-row input:focus,.form-row select:focus{border-color:var(--accent)}
+.form-row select option{background:var(--card)}
+.btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .15s;font-family:var(--sans)}
+.btn-primary{background:var(--accent);color:#fff;width:100%;padding:11px}
+.btn-primary:hover{background:#3d68e8}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-ghost:hover{color:var(--text);border-color:var(--muted)}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-danger{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
+.btn-danger:hover{background:rgba(239,68,68,.25)}
+.btn-success{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3)}
+.btn-success:hover{background:rgba(34,197,94,.25)}
+.btn-amber{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
+
+/* APP SHELL */
+.app-shell{display:none;flex:1;flex-direction:column}
+.app-shell.visible{display:flex}
+
+/* TOPBAR */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.logo{font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px}
+.logo-icon-sm{width:26px;height:26px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:7px;display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.role-badge{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600}
+.role-manager{background:rgba(245,158,11,.15);color:var(--amber)}
+.role-employee{background:rgba(79,124,255,.15);color:var(--accent)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:grid;place-items:center;font-size:12px;font-weight:700;flex-shrink:0;cursor:pointer}
+.notif-btn{position:relative;background:none;border:none;cursor:pointer;font-size:18px;line-height:1}
+.notif-dot{position:absolute;top:-2px;right:-2px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--surface)}
+
+/* NAV TABS */
+.nav-tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:2px;overflow-x:auto;flex-shrink:0}
+.nav-tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:.15s}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* CONTENT */
+.page{display:none;padding:24px;flex:1;overflow-y:auto}
+.page.active{display:block}
+
+/* CARDS & GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.stat-value{font-size:26px;font-weight:700;font-family:var(--mono);letter-spacing:-1px}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px}
+.panel-title{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.section-title{font-size:15px;font-weight:600;margin-bottom:14px}
+
+/* ROSTER TABLE */
+.table-wrap{background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:auto;margin-bottom:20px}
+table{width:100%;border-collapse:collapse;min-width:700px}
+th{background:var(--surface);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:11px 14px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.emp-cell{display:flex;align-items:center;gap:10px}
+.emp-name{font-weight:500;font-size:13px}
+.emp-role-label{font-size:11px;color:var(--muted)}
+
+/* SHIFT PILLS */
+.shift-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:11px;font-family:var(--mono);font-weight:500;white-space:nowrap}
+.shift-morning{background:rgba(79,124,255,.15);color:#7aa3ff}
+.shift-evening{background:rgba(124,58,237,.15);color:#a78bfa}
+.shift-night{background:rgba(30,30,60,.7);color:#94a3b8}
+.shift-24h{background:rgba(239,68,68,.15);color:#fca5a5}
+.shift-off{background:transparent;color:var(--muted);font-style:italic}
+
+/* STATUS */
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px}
+.dot-green{background:var(--green);box-shadow:0 0 5px var(--green)}
+.dot-amber{background:var(--amber)}
+.dot-red{background:var(--red)}
+.dot-blue{background:var(--accent)}
+.status-text{font-size:12px;display:flex;align-items:center}
+
+/* REQUEST CARDS */
+.request-list{display:flex;flex-direction:column;gap:10px}
+.request-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.request-info{flex:1}
+.request-info h4{font-size:13px;font-weight:600;margin-bottom:3px}
+.request-info p{font-size:12px;color:var(--muted)}
+.request-actions{display:flex;gap:6px;flex-shrink:0}
+.request-type{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+.type-vacation{background:rgba(124,58,237,.2);color:#a78bfa}
+.type-dayoff{background:rgba(34,197,94,.15);color:var(--green)}
+.type-24h{background:rgba(239,68,68,.15);color:#fca5a5}
+.type-swap{background:rgba(245,158,11,.15);color:var(--amber)}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-full{grid-column:1/-1}
+.form-section{margin-bottom:20px}
+.form-section-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;place-items:center;z-index:200;backdrop-filter:blur(4px)}
+.modal-overlay.open{display:grid}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:28px;width:460px;max-width:96vw;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:700;margin-bottom:20px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.modal-actions .btn{width:auto;padding:8px 18px}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;z-index:999;transform:translateY(80px);opacity:0;transition:.3s;display:flex;align-items:center;gap:8px;box-shadow:0 8px 30px rgba(0,0,0,.4)}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* WEEK NAV */
+.week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.week-label{font-size:14px;font-weight:600}
+.week-controls{display:flex;gap:6px}
+
+/* EMPLOYEE TABLE */
+.emp-table-actions{display:flex;gap:6px}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+
+/* 24H TIMELINE */
+.timeline-wrap{overflow-x:auto;margin-bottom:20px}
+.timeline-grid{display:grid;grid-template-columns:140px repeat(24,minmax(38px,1fr));border:1px solid var(--border);border-radius:10px;overflow:hidden;min-width:900px}
+.tl-header{background:var(--surface);font-size:10px;color:var(--muted);padding:6px 4px;text-align:center;border-bottom:1px solid var(--border);border-right:1px solid var(--border);font-family:var(--mono)}
+.tl-name{background:var(--surface);font-size:12px;font-weight:500;padding:8px 10px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);display:flex;align-items:center;gap:6px}
+.tl-cell{border-bottom:1px solid var(--border);border-right:1px solid var(--border);height:38px;position:relative}
+.tl-cell.active-shift{background:rgba(79,124,255,.25)}
+.tl-cell.active-24h{background:rgba(239,68,68,.2)}
+.tl-cell.active-evening{background:rgba(124,58,237,.2)}
+.tl-row-name{font-size:11px;color:var(--muted)}
+
+/* RESPONSIVE */
+@media(max-width:700px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .form-grid{grid-template-columns:1fr}
+  .nav-tabs{gap:0}
+  .nav-tab{padding:10px 10px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN SCREEN ═══ -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">⚡</div>
+      <h1>ShiftFlow</h1>
+      <p>Employee scheduling made simple</p>
+    </div>
+    <div class="role-tabs">
+      <div class="role-tab active" onclick="setRole('manager',this)">Manager</div>
+      <div class="role-tab" onclick="setRole('employee',this)">Employee</div>
+    </div>
+    <div class="form-row">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@company.com" value="manager@shiftflow.com"/>
+    </div>
+    <div class="form-row">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" value="••••••••"/>
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()" style="margin-top:6px">Sign in</button>
+    <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:14px">
+      Demo: switch role above and click Sign in
+    </p>
+  </div>
+</div>
+
+<!-- ═══ APP SHELL ═══ -->
+<div class="app-shell" id="appShell">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="logo"><div class="logo-icon-sm">⚡</div> ShiftFlow</div>
+      <span class="role-badge" id="roleBadge">Manager</span>
+    </div>
+    <div class="topbar-right">
+      <button class="notif-btn" onclick="showPage('requests')" title="Requests">
+        🔔<span class="notif-dot" id="notifDot"></span>
+      </button>
+      <div class="avatar" id="userAvatar">AD</div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- NAV TABS -->
+  <div class="nav-tabs" id="navTabs">
+    <div class="nav-tab active" onclick="showPage('schedule')">📅 Schedule</div>
+    <div class="nav-tab" onclick="showPage('timeline')">🕐 24h View</div>
+    <div class="nav-tab" onclick="showPage('requests')">📋 Requests <span id="reqBadge" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px">3</span></div>
+    <div class="nav-tab manager-only" onclick="showPage('employees')">👥 Employees</div>
+    <div class="nav-tab manager-only" onclick="showPage('manager')">🔐 Manager</div>
+  </div>
+
+  <!-- ═══ PAGE: SCHEDULE ═══ -->
+  <div class="page active" id="page-schedule">
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">On duty now</div>
+        <div class="stat-value" style="color:var(--green)">8</div>
+        <div class="stat-sub"><span class="dot dot-green"></span>Live</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">This week shifts</div>
+        <div class="stat-value">34</div>
+        <div class="stat-sub">Scheduled</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Open shifts</div>
+        <div class="stat-value" style="color:var(--amber)">3</div>
+        <div class="stat-sub">Needs coverage</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Pending requests</div>
+        <div class="stat-value" style="color:var(--accent)">5</div>
+        <div class="stat-sub">Awaiting approval</div>
+      </div>
+    </div>
+
+    <div class="week-nav">
+      <span class="week-label">Jun 16 – Jun 22, 2026</span>
+      <div class="week-controls">
+        <button class="btn btn-ghost btn-sm">‹ Prev</button>
+        <button class="btn btn-ghost btn-sm">Today</button>
+        <button class="btn btn-ghost btn-sm">Next ›</button>
+        <button class="btn btn-primary btn-sm manager-only" onclick="openModal('addShift')">+ Add Shift</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Mon 16</th><th>Tue 17</th><th>Wed 18</th><th>Thu 19</th><th>Fri 20</th><th>Sat 21</th><th>Sun 22</th>
+            <th>Hrs</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="emp-cell"><div class="avatar" style="width:28px;height:28px;font-size:11px">JM</div><div><div class="emp-name">James Mwangi</div><div class="emp-role-label">Cashier</div></div></div></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-evening">1pm–9pm</span></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span style="font-family:var(--mono);font-size:12px;color:var(--muted)">40h</span></td>
+            <td><span class="status-text"><span class="dot dot-green"></span>On shift</span></td>
+          </tr>
+          <tr>
+            <td><div class="emp-cell"><div class="avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#7c3aed,#db2777)">AO</div><div><div class="emp-name">Amara Osei</div><div class="emp-role-label">Supervisor</div></div></div></td>
+            <td><span class="shift-pill shift-evening">1pm–9pm</span></td>
+            <td><span class="shift-pill shift-evening">1pm–9pm</span></td>
+            <td><span class="shift-pill shift-evening">1pm–9pm</span></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span style="font-family:var(--mono);font-size:12px;color:var(--muted)">40h</span></td>
+            <td><span class="status-text"><span class="dot dot-amber"></span>Upcoming</span></td>
+          </tr>
+          <tr>
+            <td><div class="emp-cell"><div class="avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#0ea5e9,#22c55e)">SK</div><div><div class="emp-name">Sophie Kariuki</div><div class="emp-role-label">Warehouse</div></div></div></td>
+            <td><span class="shift-pill shift-24h">24h Shift</span></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span class="shift-pill shift-24h">24h Shift</span></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span class="shift-pill shift-night">10pm–6am</span></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span class="shift-pill shift-night">10pm–6am</span></td>
+            <td><span style="font-family:var(--mono);font-size:12px;color:var(--muted)">56h</span></td>
+            <td><span class="status-text"><span class="dot dot-green"></span>On shift</span></td>
+          </tr>
+          <tr>
+            <td><div class="emp-cell"><div class="avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#f59e0b,#ef4444)">DL</div><div><div class="emp-name">David Luo</div><div class="emp-role-label">Cashier</div></div></div></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-off">Vacation</span></td>
+            <td><span class="shift-pill shift-off">Vacation</span></td>
+            <td><span style="font-family:var(--mono);font-size:12px;color:var(--muted)">32h</span></td>
+            <td><span class="status-text"><span class="dot dot-red"></span>Off today</span></td>
+          </tr>
+          <tr>
+            <td><div class="emp-cell"><div class="avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#14b8a6,#3b82f6)">FN</div><div><div class="emp-name">Fatima Nkosi</div><div class="emp-role-label">Floor Lead</div></div></div></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-24h">24h Shift</span></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span class="shift-pill shift-morning">9am–5pm</span></td>
+            <td><span class="shift-pill shift-off">Off</span></td>
+            <td><span style="font-family:var(--mono);font-size:12px;color:var(--muted)">48h</span></td>
+            <td><span class="status-text"><span class="dot dot-green"></span>On shift</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Employee: My shift card -->
+    <div id="myShiftCard" style="display:none">
+      <div class="panel" style="border-color:var(--accent);background:rgba(79,124,255,.06)">
+        <div class="panel-title">My Upcoming Shifts</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Today</div>
+            <div style="font-size:15px;font-weight:700;color:#7aa3ff">9am – 5pm</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Morning</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Thursday</div>
+            <div style="font-size:15px;font-weight:700;color:#7aa3ff">9am – 5pm</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Morning</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">Saturday</div>
+            <div style="font-size:15px;font-weight:700;color:#a78bfa">1pm – 9pm</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">Evening</div>
+          </div>
+        </div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('newRequest')">Request Day Off</button>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('newRequest')">Request Vacation</button>
+          <button class="btn btn-ghost btn-sm" onclick="openModal('new24h')">Request 24h Shift</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ PAGE: 24H TIMELINE ═══ -->
+  <div class="page" id="page-timeline">
+    <div class="section-title">24-Hour Shift View — Jun 21, 2026</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Live view of all shifts across the day. Red = 24h shift, Blue = morning, Purple = evening, Dark = night.</p>
+    <div class="timeline-wrap">
+      <div class="timeline-grid">
+        <!-- Header row -->
+        <div class="tl-header" style="border-right:1px solid var(--border)">Employee</div>
+        <div class="tl-header">0</div><div class="tl-header">1</div><div class="tl-header">2</div>
+        <div class="tl-header">3</div><div class="tl-header">4</div><div class="tl-header">5</div>
+        <div class="tl-header">6</div><div class="tl-header">7</div><div class="tl-header">8</div>
+        <div class="tl-header">9</div><div class="tl-header">10</div><div class="tl-header">11</div>
+        <div class="tl-header">12</div><div class="tl-header">13</div><div class="tl-header">14</div>
+        <div class="tl-header">15</div><div class="tl-header">16</div><div class="tl-header">17</div>
+        <div class="tl-header">18</div><div class="tl-header">19</div><div class="tl-header">20</div>
+        <div class="tl-header">21</div><div class="tl-header">22</div><div class="tl-header">23</div>
+        <!-- James: 9-17 -->
+        <div class="tl-name"><div class="avatar" style="width:22px;height:22px;font-size:10px">JM</div><div><div style="font-size:11px;font-weight:500">James M.</div><div class="tl-row-name">Cashier</div></div></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+        <div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+        <!-- Amara: 13-21 -->
+        <div class="tl-name"><div class="avatar" style="width:22px;height:22px;font-size:10px;background:linear-gradient(135deg,#7c3aed,#db2777)">AO</div><div><div style="font-size:11px;font-weight:500">Amara O.</div><div class="tl-row-name">Supervisor</div></div></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+        <div class="tl-cell active-evening"></div><div class="tl-cell active-evening"></div><div class="tl-cell active-evening"></div><div class="tl-cell active-evening"></div><div class="tl-cell active-evening"></div><div class="tl-cell active-evening"></div><div class="tl-cell active-evening"></div><div class="tl-cell active-evening"></div><div class="tl-cell active-evening"></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div>
+        <!-- Sophie: 24h -->
+        <div class="tl-name"><div class="avatar" style="width:22px;height:22px;font-size:10px;background:linear-gradient(135deg,#0ea5e9,#22c55e)">SK</div><div><div style="font-size:11px;font-weight:500">Sophie K.</div><div class="tl-row-name">Warehouse</div></div></div>
+        <div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div><div class="tl-cell active-24h"></div>
+        <!-- Fatima: 9-17 -->
+        <div class="tl-name"><div class="avatar" style="width:22px;height:22px;font-size:10px;background:linear-gradient(135deg,#14b8a6,#3b82f6)">FN</div><div><div style="font-size:11px;font-weight:500">Fatima N.</div><div class="tl-row-name">Floor Lead</div></div></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+        <div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div><div class="tl-cell active-shift"></div>
+        <div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div><div class="tl-cell"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px">
+      <span><span style="display:inline-block;width:12px;height:12px;background:rgba(79,124,255,.25);border-radius:2px;margin-right:4px;vertical-align:middle"></span>Morning (9am–5pm)</span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:rgba(124,58,237,.25);border-radius:2px;margin-right:4px;vertical-align:middle"></span>Evening (1pm–9pm)</span>
+      <span><span style="display:inline-block;width:12px;height:12px;background:rgba(239,68,68,.2);border-radius:2px;margin-right:4px;vertical-align:middle"></span>24-Hour Shift</span>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: REQUESTS ═══ -->
+  <div class="page" id="page-requests">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="section-title" style="margin-bottom:0">Requests</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('newRequest')">+ New Request</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Pending Approval <span style="font-size:11px;color:var(--muted);font-weight:400">3 requests</span></div>
+      <div class="request-list">
+        <div class="request-card">
+          <div class="request-info">
+            <span class="request-type type-vacation">Vacation</span>
+            <h4>James Mwangi — Jul 4–11, 2026</h4>
+            <p>8 days · "Family trip abroad" · Requested Jun 19</p>
+          </div>
+          <div class="request-actions manager-only">
+            <button class="btn btn-success btn-sm" onclick="approveRequest(this,'approved')">Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="approveRequest(this,'denied')">Deny</button>
+          </div>
+        </div>
+        <div class="request-card">
+          <div class="request-info">
+            <span class="request-type type-dayoff">Day Off</span>
+            <h4>Amara Osei — Jun 27, 2026</h4>
+            <p>1 day · "Personal appointment" · Requested Jun 20</p>
+          </div>
+          <div class="request-actions manager-only">
+            <button class="btn btn-success btn-sm" onclick="approveRequest(this,'approved')">Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="approveRequest(this,'denied')">Deny</button>
+          </div>
+        </div>
+        <div class="request-card">
+          <div class="request-info">
+            <span class="request-type type-24h">24h Shift</span>
+            <h4>Fatima Nkosi — Jun 28, 2026</h4>
+            <p>24-hour shift · "Coverage needed, I volunteer" · Requested Jun 21</p>
+          </div>
+          <div class="request-actions manager-only">
+            <button class="btn btn-success btn-sm" onclick="approveRequest(this,'approved')">Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="approveRequest(this,'denied')">Deny</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Recently Resolved</div>
+      <div class="request-list">
+        <div class="request-card" style="opacity:.7">
+          <div class="request-info">
+            <span class="request-type type-swap">Shift Swap</span>
+            <h4>Sophie Kariuki — Jun 18 swap with David Luo</h4>
+            <p>Approved by Admin · Jun 17</p>
+          </div>
+          <span style="font-size:12px;color:var(--green);font-weight:600">✓ Approved</span>
+        </div>
+        <div class="request-card" style="opacity:.7">
+          <div class="request-info">
+            <span class="request-type type-vacation">Vacation</span>
+            <h4>David Luo — Jun 21–22, 2026</h4>
+            <p>Approved by Admin · Jun 15</p>
+          </div>
+          <span style="font-size:12px;color:var(--green);font-weight:600">✓ Approved</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: EMPLOYEES ═══ -->
+  <div class="page" id="page-employees">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="section-title" style="margin-bottom:0">Employees</div>
+      <button class="btn btn-primary btn-sm" onclick="openModal('addEmployee')">+ Add Employee</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Role</th><th>Email</th><th>Hours/Week</th><th>Status</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><div class="emp-cell"><div class="avatar" style="width:28px;height:28px;font-size:11px">JM</div><div class="emp-name">James Mwangi</div></div></td>
+            <td>Cashier</td><td style="color:var(--muted);font-size:12px">james@company.com</td>
+            <td><span style="font-family:var(--mono);font-size:12px">40h</span></td>
+            <td><span class="status-text"><span class="dot dot-green"></span>Active</span></td>
+            <td><div class="emp-table-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-danger btn-sm">Remove</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="emp-cell"><div class="avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#7c3aed,#db2777)">AO</div><div class="emp-name">Amara Osei</div></div></td>
+            <td>Supervisor</td><td style="color:var(--muted);font-size:12px">amara@company.com</td>
+            <td><span style="font-family:var(--mono);font-size:12px">40h</span></td>
+            <td><span class="status-text"><span class="dot dot-green"></span>Active</span></td>
+            <td><div class="emp-table-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-danger btn-sm">Remove</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="emp-cell"><div class="avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#0ea5e9,#22c55e)">SK</div><div class="emp-name">Sophie Kariuki</div></div></td>
+            <td>Warehouse</td><td style="color:var(--muted);font-size:12px">sophie@company.com</td>
+            <td><span style="font-family:var(--mono);font-size:12px">56h</span></td>
+            <td><span class="status-text"><span class="dot dot-green"></span>Active</span></td>
+            <td><div class="emp-table-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-danger btn-sm">Remove</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="emp-cell"><div class="avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#f59e0b,#ef4444)">DL</div><div class="emp-name">David Luo</div></div></td>
+            <td>Cashier</td><td style="color:var(--muted);font-size:12px">david@company.com</td>
+            <td><span style="font-family:var(--mono);font-size:12px">32h</span></td>
+            <td><span class="status-text"><span class="dot dot-amber"></span>On Leave</span></td>
+            <td><div class="emp-table-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-danger btn-sm">Remove</button></div></td>
+          </tr>
+          <tr>
+            <td><div class="emp-cell"><div class="avatar" style="width:28px;height:28px;font-size:11px;background:linear-gradient(135deg,#14b8a6,#3b82f6)">FN</div><div class="emp-name">Fatima Nkosi</div></div></td>
+            <td>Floor Lead</td><td style="color:var(--muted);font-size:12px">fatima@company.com</td>
+            <td><span style="font-family:var(--mono);font-size:12px">48h</span></td>
+            <td><span class="status-text"><span class="dot dot-green"></span>Active</span></td>
+            <td><div class="emp-table-actions"><button class="btn btn-ghost btn-sm">Edit</button><button class="btn btn-danger btn-sm">Remove</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ PAGE: MANAGER ═══ -->
+  <div class="page" id="page-manager">
+    <div class="section-title">Manager Dashboard</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="panel">
+        <div class="panel-title">Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left" onclick="openModal('addShift')">📅 Create new shift</button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left" onclick="showPage('requests')">📋 Review pending requests (3)</button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left" onclick="showPage('employees')">👥 Manage employees</button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left">📤 Export schedule (CSV)</button>
+          <button class="btn btn-ghost" style="justify-content:flex-start;text-align:left">📧 Notify all staff</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">This Week Summary</div>
+        <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Total scheduled hours</span><span style="font-family:var(--mono);font-weight:600">200h</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Employees scheduled</span><span style="font-family:var(--mono);font-weight:600">5</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">24h shifts this week</span><span style="font-family:var(--mono);font-weight:600;color:#fca5a5">4</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Employees on vacation</span><span style="font-family:var(--mono);font-weight:600;color:var(--amber)">1</span></div>
+          <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Open shifts</span><span style="font-family:var(--mono);font-weight:600;color:var(--red)">3</span></div>
+        </div>
+      </div>
+      <div class="panel" style="grid-column:1/-1">
+        <div class="panel-title">Vacation Calendar — June 2026</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:11px">
+          <div style="text-align:center;color:var(--muted);padding:4px">Su</div><div style="text-align:center;color:var(--muted);padding:4px">Mo</div><div style="text-align:center;color:var(--muted);padding:4px">Tu</div><div style="text-align:center;color:var(--muted);padding:4px">We</div><div style="text-align:center;color:var(--muted);padding:4px">Th</div><div style="text-align:center;color:var(--muted);padding:4px">Fr</div><div style="text-align:center;color:var(--muted);padding:4px">Sa</div>
+          <div></div><div style="text-align:center;padding:6px;border-radius:4px">1</div><div style="text-align:center;padding:6px;border-radius:4px">2</div><div style="text-align:center;padding:6px;border-radius:4px">3</div><div style="text-align:center;padding:6px;border-radius:4px">4</div><div style="text-align:center;padding:6px;border-radius:4px">5</div><div style="text-align:center;padding:6px;border-radius:4px">6</div>
+          <div style="text-align:center;padding:6px;border-radius:4px">7</div><div style="text-align:center;padding:6px;border-radius:4px">8</div><div style="text-align:center;padding:6px;border-radius:4px">9</div><div style="text-align:center;padding:6px;border-radius:4px">10</div><div style="text-align:center;padding:6px;border-radius:4px">11</div><div style="text-align:center;padding:6px;border-radius:4px">12</div><div style="text-align:center;padding:6px;border-radius:4px">13</div>
+          <div style="text-align:center;padding:6px;border-radius:4px">14</div><div style="text-align:center;padding:6px;border-radius:4px">15</div><div style="text-align:center;padding:6px;border-radius:4px">16</div><div style="text-align:center;padding:6px;border-radius:4px">17</div><div style="text-align:center;padding:6px;border-radius:4px">18</div><div style="text-align:center;padding:6px;border-radius:4px">19</div><div style="text-align:center;padding:6px;border-radius:4px">20</div>
+          <div style="text-align:center;padding:6px;border-radius:4px;background:rgba(79,124,255,.2);color:#7aa3ff;font-weight:600">21</div>
+          <div style="text-align:center;padding:6px;border-radius:4px">22</div><div style="text-align:center;padding:6px;border-radius:4px">23</div><div style="text-align:center;padding:6px;border-radius:4px">24</div><div style="text-align:center;padding:6px;border-radius:4px">25</div><div style="text-align:center;padding:6px;border-radius:4px">26</div><div style="text-align:center;padding:6px;border-radius:4px">27</div>
+          <div style="text-align:center;padding:6px;border-radius:4px">28</div><div style="text-align:center;padding:6px;border-radius:4px;background:rgba(245,158,11,.15);color:var(--amber)">29</div><div style="text-align:center;padding:6px;border-radius:4px;background:rgba(245,158,11,.15);color:var(--amber)">30</div>
+        </div>
+        <div style="margin-top:10px;font-size:11px;display:flex;gap:12px;color:var(--muted)">
+          <span><span style="display:inline-block;width:10px;height:10px;background:rgba(79,124,255,.2);border-radius:2px;margin-right:4px"></span>Today</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:rgba(245,158,11,.15);border-radius:2px;margin-right:4px"></span>Vacation days</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end app-shell -->
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- Add Shift -->
+<div class="modal-overlay" id="modal-addShift" onclick="if(event.target===this)closeModals()">
+  <div class="modal">
+    <h2>Add New Shift</h2>
+    <div class="form-grid">
+      <div class="form-row form-full"><label>Employee</label>
+        <select><option>James Mwangi</option><option>Amara Osei</option><option>Sophie Kariuki</option><option>David Luo</option><option>Fatima Nkosi</option></select>
+      </div>
+      <div class="form-row"><label>Date</label><input type="date" value="2026-06-21"/></div>
+      <div class="form-row"><label>Shift Type</label>
+        <select id="shiftTypeSelect" onchange="toggleShiftTimes()">
+          <option value="custom">Custom hours</option>
+          <option value="morning">Morning (9am–5pm)</option>
+          <option value="evening">Evening (1pm–9pm)</option>
+          <option value="night">Night (10pm–6am)</option>
+          <option value="24h">24-Hour Shift</option>
+        </select>
+      </div>
+      <div class="form-row" id="startTimeRow"><label>Start Time</label><input type="time" value="09:00"/></div>
+      <div class="form-row" id="endTimeRow"><label>End Time</label><input type="time" value="17:00"/></div>
+      <div class="form-row form-full"><label>Role / Position</label>
+        <select><option>Cashier</option><option>Supervisor</option><option>Warehouse</option><option>Floor Lead</option></select>
+      </div>
+      <div class="form-row form-full"><label>Notes (optional)</label><input type="text" placeholder="e.g. Cover for sick leave"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAndClose('Shift saved!')">Save Shift</button>
+    </div>
+  </div>
+</div>
+
+<!-- New Request (vacation / day off) -->
+<div class="modal-overlay" id="modal-newRequest" onclick="if(event.target===this)closeModals()">
+  <div class="modal">
+    <h2>Submit a Request</h2>
+    <div class="form-row"><label>Request Type</label>
+      <select id="reqTypeSelect">
+        <option value="vacation">Vacation</option>
+        <option value="dayoff">Day Off</option>
+        <option value="swap">Shift Swap</option>
+      </select>
+    </div>
+    <div class="form-row"><label>Start Date</label><input type="date" value="2026-07-04"/></div>
+    <div class="form-row"><label>End Date (leave same for 1 day)</label><input type="date" value="2026-07-11"/></div>
+    <div class="form-row"><label>Reason / Notes</label><input type="text" placeholder="Brief description..."/></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAndClose('Request submitted!')">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- 24h shift request -->
+<div class="modal-overlay" id="modal-new24h" onclick="if(event.target===this)closeModals()">
+  <div class="modal">
+    <h2>Request 24-Hour Shift</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">24-hour shifts must be approved by a manager and are subject to local labor regulations.</p>
+    <div class="form-row"><label>Date</label><input type="date" value="2026-06-28"/></div>
+    <div class="form-row"><label>Reason for volunteering</label><input type="text" placeholder="e.g. Coverage needed, I'm available"/></div>
+    <div class="form-row"><label>Confirm you've read the 24h policy</label>
+      <select><option>Yes, I understand</option><option>No, show me the policy</option></select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAndClose('24h shift request submitted!')">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Employee -->
+<div class="modal-overlay" id="modal-addEmployee" onclick="if(event.target===this)closeModals()">
+  <div class="modal">
+    <h2>Add Employee</h2>
+    <div class="form-grid">
+      <div class="form-row"><label>First Name</label><input type="text" placeholder="Jane"/></div>
+      <div class="form-row"><label>Last Name</label><input type="text" placeholder="Smith"/></div>
+      <div class="form-row form-full"><label>Email</label><input type="email" placeholder="jane@company.com"/></div>
+      <div class="form-row"><label>Role</label>
+        <select><option>Cashier</option><option>Supervisor</option><option>Warehouse</option><option>Floor Lead</option><option>Manager</option></select>
+      </div>
+      <div class="form-row"><label>Account Type</label>
+        <select><option>Employee</option><option>Manager</option></select>
+      </div>
+      <div class="form-row"><label>Default Hours/Week</label><input type="number" value="40" min="1" max="168"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModals()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAndClose('Employee added!')">Add Employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">✅ <span id="toastMsg">Done</span></div>
+
+<script>
+  let currentRole = 'manager';
+
+  function setRole(role, el) {
+    currentRole = role;
+    document.querySelectorAll('.role-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    const email = document.getElementById('loginEmail');
+    email.value = role === 'manager' ? 'manager@shiftflow.com' : 'employee@shiftflow.com';
+  }
+
+  function doLogin() {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('appShell').classList.add('visible');
+
+    const isManager = currentRole === 'manager';
+    document.getElementById('roleBadge').textContent = isManager ? 'Manager' : 'Employee';
+    document.getElementById('roleBadge').className = 'role-badge ' + (isManager ? 'role-manager' : 'role-employee');
+    document.getElementById('userAvatar').textContent = isManager ? 'AD' : 'JM';
+
+    // Show/hide manager-only elements
+    document.querySelectorAll('.manager-only').forEach(el => {
+      el.style.display = isManager ? '' : 'none';
+    });
+
+    // Show my shift card for employees
+    document.getElementById('myShiftCard').style.display = isManager ? 'none' : 'block';
+
+    showPage('schedule');
+  }
+
+  function doLogout() {
+    document.getElementById('appShell').classList.remove('visible');
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    const page = document.getElementById('page-' + name);
+    if (page) page.classList.add('active');
+    // Highlight nav
+    document.querySelectorAll('.nav-tab').forEach(t => {
+      if (t.textContent.toLowerCase().includes(name.substring(0,5))) t.classList.add('active');
+    });
+  }
+
+  function openModal(id) {
+    closeModals();
+    const m = document.getElementById('modal-' + id);
+    if (m) m.classList.add('open');
+  }
+
+  function closeModals() {
+    document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open'));
+  }
+
+  function saveAndClose(msg) {
+    closeModals();
+    showToast(msg);
+  }
+
+  function approveRequest(btn, action) {
+    const card = btn.closest('.request-card');
+    const actionsDiv = card.querySelector('.request-actions');
+    if (action === 'approved') {
+      actionsDiv.innerHTML = '<span style="font-size:12px;color:var(--green);font-weight:600">✓ Approved</span>';
+      showToast('Request approved!');
+    } else {
+      actionsDiv.innerHTML = '<span style="font-size:12px;color:var(--red);font-weight:600">✗ Denied</span>';
+      showToast('Request denied.');
+    }
+    card.style.opacity = '.6';
+    // Update badge
+    const badges = document.querySelectorAll('#reqBadge');
+    badges.forEach(b => {
+      let n = parseInt(b.textContent);
+      if (n > 0) b.textContent = n - 1;
+    });
+  }
+
+  function toggleShiftTimes() {
+    const val = document.getElementById('shiftTypeSelect').value;
+    const hide = val === '24h';
+    document.getElementById('startTimeRow').style.display = hide ? 'none' : '';
+    document.getElementById('endTimeRow').style.display = hide ? 'none' : '';
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Nav tab click highlighting
+  document.querySelectorAll('.nav-tab').forEach((tab, i) => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
