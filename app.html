@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>ShiftFlow – Employee Scheduling</title>
+<title>Skedvio – Employee Scheduling</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -177,7 +177,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div class="login-box">
     <div class="login-logo">
       <div class="logo-icon">⚡</div>
-      <h1>ShiftFlow</h1>
+      <h1>Skedvio</h1>
       <p>Employee scheduling made simple</p>
     </div>
     <div class="role-tabs">
@@ -186,7 +186,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
     <div class="form-row">
       <label>Email</label>
-      <input type="email" id="loginEmail" placeholder="you@company.com" value="manager@shiftflow.com"/>
+      <input type="email" id="loginEmail" placeholder="you@company.com" value="manager@skedvio.com"/>
     </div>
     <div class="form-row">
       <label>Password</label>
@@ -205,7 +205,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-left">
-      <div class="logo"><div class="logo-icon-sm">⚡</div> ShiftFlow</div>
+      <div class="logo"><div class="logo-icon-sm">⚡</div> Skedvio</div>
       <span class="role-badge" id="roleBadge">Manager</span>
     </div>
     <div class="topbar-right">
@@ -763,8 +763,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
   }
 
   function doLogout() {
-    document.getElementById('appShell').classList.remove('visible');
-    document.getElementById('loginScreen').style.display = 'flex';
+    window.location.href = 'index.html';
   }
 
   function showPage(name) {
